@@ -13,8 +13,9 @@
 - [ ] Try on RStudio Server in The Zone. Compiler: present per the image Dockerfile (gcc, R 4.6.1). Still check: install from a
       GitLab mirror (`pak::pak("git::https://<gitlab>/...")`), `R_user_dir` writable?, log shown in console?
 - [x] Zone binaries: use the image's pip-installed banff 3.2.0 (`banff.lib_dir`) or `banff_install_binaries(wheel = "/opt/vendor/banff-*.whl")`
-- [ ] Decide the target version: Zone = 3.2.0 (internal), PyPI = 3.1.3. Probably generate for 3.2.0 and re-record fixtures
-      with 3.2.0 Python (the outlier samples need `method = "HB"`), or generate specs per version and pick at load time
+- [x] Target 3.2.0 (D14). Regenerated; fixtures re-recorded with Python banff 3.2.0; all tests green on 3.2.0 libs
+- [x] Zero-config on The Zone: auto-detect the image's pip-installed banff 3.2.0 (D15)
+- [ ] Optional: per-version specs (3.1.3 + 3.2.0) picked at load time, if PyPI 3.1.3 users matter
 - [ ] `banff_install_binaries()` against **Artifactory's PyPI remote** (index URL, auth?, sha256 in links?)
 - [x] Perf: presort skips already-sorted data and uses `vctrs::vec_slice` instead of `[.data.frame` (editstats 1e6: 1.36 → 1.09 s on arrow-backed input)
 - [ ] Perf: arrow/duckdb inputs are currently converted to data.frame for preprocessing. That forces arrow's lazy ALTREP columns to
@@ -23,6 +24,8 @@
 - [ ] Version guard. Refuse libraries whose version ≠ the generated spec version, because an ABI mismatch means a segfault.
       Idea: check the binary folder's version, or a known symbol, before calling.
 - [ ] Port more upstream tests: `Python/tests/regression_tests` (methodologist-written) → more fixtures
+- [x] GitHub Actions CI (D16)
+- [ ] GitLab CI once mirrored to internal GitLab (same steps; binaries from `/opt/vendor` or Artifactory)
 - [ ] `R CMD check` clean (now: tests pass; 1 NOTE = intentional `stdout` fd redirect in shim, CRAN-only concern). GitLab CI: check + tests on every push. Monthly job against the latest upstream
 - [ ] Release script: `gen_procs.py` → `roxygenise` → `make_fixtures.py` → `devtools::test()` → bump
 - [ ] README tutorial: one SAS-migration example in R (mirror `docs/EN/sas_migration_tutorial.md`)
@@ -68,3 +71,11 @@ Needed for: macOS/arm64, CRAN, or if upstream stops publishing wheels.
 | C crash kills the R session | low | lost session | same as Python today; optional `callr` isolation |
 | Wheel/PyPI not reachable in the air-gapped env | med | can't install | Artifactory remote, or vendor the libs |
 | Seen as "unofficial", support questions go to gensol | med | friction | clear README disclaimer; engage gensol early |
+
+## UI decisions (open; current choice in brackets)
+- Function names: upstream names (`donorimp`, `errorloc`, ...) [yes]. Also `banff_`-prefixed aliases for autocomplete/stringr style? [no for now]
+  Known clash: `outliers::outlier()`. Only matters if both are attached; `banff::outlier()` avoids it.
+- NSE: string args only, like the docs [yes]. Later maybe tidyselect for `by`, `must_match` (`by = c(PROV, NAICS)`). `edits` stay strings either way.
+- Pipes: `indata` first [yes]; results are lists, so `res$outdata` or `res |> _$outdata` (R >= 4.3).
+- Return: list of tibbles + `$log` [yes]. Optionally an Arrow-returning mode for big data.
+- Bilingual: `gettext()` for R messages (D18).

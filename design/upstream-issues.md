@@ -13,6 +13,7 @@ The drafts below came from building this package. They're filed there and checke
 | [#22](https://github.com/colin-ww/sc-banff/issues/22) | `exclude_where_indata` silently overrides `data_excl_var` | still present (mirrored on purpose in R, D7) |
 | [#23](https://github.com/colin-ww/sc-banff/issues/23) | sample programs without `seed` aren't reproducible | still present on upstream `main` |
 | [#24](https://github.com/colin-ww/sc-banff/issues/24) | proposal: document the C ABI as a supported interface | n/a |
+| [#25](https://github.com/colin-ww/sc-banff/issues/25) | 3.2.0 outlier docstring + public samples still use removed method values | **new in 3.2.0** |
 | [#10](https://github.com/colin-ww/sc-banff/issues/10) (existing) | `ProcedureCError` hides the reason (only on stdout) | related: R captures the log into `$log` and the error |
 
 Not filed:

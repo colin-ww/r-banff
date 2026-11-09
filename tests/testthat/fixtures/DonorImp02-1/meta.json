@@ -19,6 +19,9 @@
     "outdonormap",
     "outmatching_fields"
   ],
-  "banff_version": "3.1.3",
-  "sample": "DonorImp02"
+  "banff_version": "3.2.0",
+  "sample": "DonorImp02",
+  "patched": {
+    "seed": 20261109
+  }
 }

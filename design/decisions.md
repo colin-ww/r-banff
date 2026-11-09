@@ -71,3 +71,25 @@ Format: decision · why · alternatives rejected · revisit when. Newest last.
   (`sensitiv`). Its other three modules are pure Python (PuLP/HiGHS).
 - So: shim, loader and runner stay generic. Only the generated spec is per-system. Python-only modules
   use the reticulate + Arrow bridge.
+
+### D14. Target Banff 3.2.0 (the Zone's version), not 3.1.3 (PyPI)
+- **Why:** The Zone images ship 3.2.0, and that's where users are. Wrappers are regenerated from the 3.2.0 wheel's Python source.
+  Golden fixtures are re-recorded with Python banff 3.2.0. The 3 outlier samples are patched (`current`/`historic` → `HB`,
+  `sigmagap` → `SG`) and flagged in `meta.json`.
+- **Cost:** PyPI 3.1.3 users get a version-mismatch warning, and the old outlier method names. Windows has no public 3.2.0 wheel yet.
+
+### D15. Binary sources, in order: local/URL wheel → pinned known URL → PyPI index; auto-detect a pip install
+- 3.2.0 isn't on PyPI, so it's fetched from StatCan's public Zone image repo at a pinned commit with a pinned sha256.
+- On The Zone, the image's pip-installed banff 3.2.0 is found automatically (`site-packages/banff-3.2.0.dist-info`), so no setup is needed.
+
+### D16. CI on GitHub Actions now; GitLab CI when mirrored internally
+- `R CMD check` + tests against the official 3.2.0 libraries, plus the Python-backend parity test against Python banff 3.2.0.
+- `BANFF_REQUIRE_BINARIES` / `BANFF_REQUIRE_PYTHON` make missing dependencies **fail** instead of skip, so green means tested.
+
+### D17. Keep upstream function names and string arguments (no NSE, no `banff_` prefix), for now
+- **Why:** 1:1 with the Python docs, the SAS migration guide and procedure names. String arguments are easy to program with and
+  match what you copy from the docs.
+- **Open:** tidyselect for `by`/`unit_id`, and `banff_`-prefixed aliases. See plan.md, UI decisions.
+
+### D18. Bilingual-ready
+- The C log is already bilingual (`banff.language`). New R-side messages go through `gettext()`, so FR can be added later. See adoption.md.

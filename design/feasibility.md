@@ -1,6 +1,7 @@
 # Feasibility: R interface to Banff
 
-Status: spike done 2026-11-09, against Banff **3.1.3** (PyPI). Verdict: **feasible, low risk, recommended**.
+Status: spike done 2026-11-09. Built against Banff **3.1.3** (PyPI), then retargeted to **3.2.0** (the Zone's version, D14). Verdict: **feasible, low risk, recommended**.
+Trust, production bar and paths to approval: [adoption.md](adoption.md).
 
 ## TL;DR
 
@@ -65,7 +66,9 @@ Your experience matches what the spike hit (and what an earlier session found in
   **`-2147483648`**, because numpy ints have no NA. It also turns logical `NA` into `FALSE`. Banff then sees a real value.
   Reproduced: `editstats` on `x = c(1L, NA, 3L, 4L)` reports `OBS_MISSED = 0, OBS_FAILED = 1` through reticulate,
   but the correct `OBS_MISSED = 1, OBS_FAILED = 0` through r-banff, whose Arrow validity bitmap marks the value missing.
-  This is reticulate/numpy, not Banff. Guarded by a test (`test-c-backend.R`).
+  This is reticulate/numpy, not Banff. It's documented: reticulate issue #197; Posit's Daniel Falbel,
+  ["Reticulate handling of NA's"](https://dfalbel.github.io/posts/reticulate-nas2/index.html). Newer reticulate has an opt-in fix:
+  `options(reticulate.pandas_use_nullable_dtypes = TRUE)`. Guarded by a test (`test-c-backend.R`).
 - **Factors** become pandas `category` → Arrow dictionary. I didn't reproduce an error with `by = <factor>` in editstats.
   r-banff converts factors to character anyway.
 - **Type conversion.** An R `data.frame` becomes pandas when it crosses over. An all-NA character column turns into
@@ -181,8 +184,8 @@ release 2026-04-30; on Artifactory `pypi-local`).
   So **no download is needed on The Zone**:
   - `options(banff.lib_dir = "/opt/conda/lib/python3.14/site-packages/banff/proc/bin/linux/x64")`, or
   - `banff_install_binaries(wheel = Sys.glob("/opt/vendor/banff-*.whl"))`. Tested here with the vendored 3.2.0 wheel.
-- Caveat: this package is generated for 3.1.3 (latest on PyPI). 3.2.0 libs work. Its new params need
-  `banff.pass_unknown` or a regenerate. Its removed outlier methods error (see stability table).
+- Package now generated for 3.2.0 (D14). The image's pip install is **auto-detected**, so there's zero setup on the Zone (D15).
+- 3.2.0 was built 2026-07-16 and vendored into the Zone repo on 2026-09-04.
 - The internal GitLab group **`gensys`** is probably where the shared `_common` / `STC_C_Libraries` code and
   newer systems (YOHO? Jasper?) live. Nothing on public GitHub: StatCan's public gensol repos are only
   `gensol-banff`, `gensol-banff-processor`, `gensol-gconfid`, `gensol-gseries`.

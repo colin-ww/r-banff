@@ -35,6 +35,16 @@ import pyarrow as pa  # noqa: E402
 OUT_DIR = Path(__file__).resolve().parent.parent / "tests" / "testthat" / "fixtures"
 PY_ONLY = {"trace", "capture", "logger"}
 SEED = 20261109  # injected where a sample omits `seed`
+# Parameter values removed upstream, rewritten so old samples still run. Applied from `since` on.
+# 3.2.0: outlier CURRENT/RATIO/HISTORIC merged into HB (variant chosen by with_var / indata_hist); SIGMAGAP -> SG.
+REWRITES = [
+    {"since": (3, 2, 0), "proc": "outlier", "param": "method",
+     "map": {"current": "HB", "ratio": "HB", "historic": "HB", "sigmagap": "SG"}},
+]
+
+
+def version_tuple(v):
+    return tuple(int(x) for x in v.split(".")[:3])
 
 
 def write_arrows(tbl, path):
@@ -51,10 +61,17 @@ def main(sample_dir: Path):
     def make_wrapper(cls):
         def wrapper(**kwargs):
             # samples without `seed` use a time-based seed -> not reproducible; pin one
+            patched = {}
             if "seed" in inspect.signature(cls.__init__).parameters and kwargs.get("seed") is None:
                 kwargs["seed"] = SEED
+                patched["seed"] = SEED
+            for rw in REWRITES:
+                val = kwargs.get(rw["param"])
+                if (cls._proc_name["short"] == rw["proc"] and isinstance(val, str)  # noqa: SLF001
+                        and version_tuple(banff.__version__) >= rw["since"] and val.lower() in rw["map"]):
+                    kwargs[rw["param"]] = patched[rw["param"]] = rw["map"][val.lower()]
             obj = cls(**kwargs)
-            calls[-1]["records"].append((cls, kwargs, obj))
+            calls[-1]["records"].append((cls, kwargs, obj, patched))
             return obj
         return wrapper
 
@@ -70,7 +87,7 @@ def main(sample_dir: Path):
 
     n_written = 0
     for c in calls:
-        for i, (cls, kwargs, obj) in enumerate(c["records"], start=1):
+        for i, (cls, kwargs, obj, patched) in enumerate(c["records"], start=1):
             d = OUT_DIR / f"{c['sample']}-{i}"
             d.mkdir()
             params, outputs = {}, []
@@ -89,7 +106,7 @@ def main(sample_dir: Path):
                     write_arrows(ds.user_output, d / f"out_{ds.name}.arrows")
                     outputs.append(ds.name)
             meta = {"proc": cls._proc_name["short"], "params": params, "outputs": outputs,  # noqa: SLF001
-                    "banff_version": banff.__version__, "sample": c["sample"]}
+                    "banff_version": banff.__version__, "sample": c["sample"], "patched": patched}
             (d / "meta.json").write_text(json.dumps(meta, indent=2))
             n_written += 1
     print(f"wrote {n_written} fixtures to {OUT_DIR}")

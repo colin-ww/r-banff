@@ -6,6 +6,7 @@
     "extremal": 10
   },
   "outputs": [],
-  "banff_version": "3.1.3",
-  "sample": "VerifyEdits01"
+  "banff_version": "3.2.0",
+  "sample": "VerifyEdits01",
+  "patched": {}
 }

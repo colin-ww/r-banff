@@ -27,6 +27,8 @@ outlier(
   method = NULL,
   side = NULL,
   sigma = NULL,
+  lower_p = NULL,
+  upper_p = NULL,
   outstatus_detailed = TRUE,
   outsummary = TRUE,
   presort = NULL,
@@ -78,6 +80,10 @@ outlier(
 \item{side}{Side ('LEFT', 'RIGHT', or 'BOTH') of the ordered data to be used for detecting outliers. Default='BOTH'.}
 
 \item{sigma}{SG type of deviation ('MAD' or 'STD') to be calculated. Default='MAD'.}
+
+\item{lower_p}{The lower percentile to use when determining outlier thresholds. Default=25 or 100-upper_p}
+
+\item{upper_p}{The upper percentile to use when determining outlier thresholds. Default=75 or 100-lower_p}
 
 \item{outstatus_detailed}{Logical, request optional output. Detailed status for the outliers (ODER/ODEL/ODIR/ODIL).}
 

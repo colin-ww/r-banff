@@ -21,11 +21,10 @@ pak::pak("git::https://github.com/colin-ww/r-banff.git")         # tested
 # pak::pak("colin-ww/r-banff")   # also fine where api.github.com is reachable
 # GitLab mirror: pak::pak("git::https://<gitlab-host>/<group>/r-banff.git")
 
-# then once, pick ONE source for the official Banff C libraries:
-banff::banff_install_binaries()                                     # from PyPI (3.1.3)
-banff::banff_install_binaries(wheel = Sys.glob("/opt/vendor/banff-*.whl"))  # The Zone: vendored wheel (3.2.0)
-options(banff.lib_dir = "/opt/conda/lib/python3.14/site-packages/banff/proc/bin/linux/x64")  # or reuse the image's pip install
-# behind Artifactory: options(banff.pypi_index = "https://<artifactory>/artifactory/api/pypi/<pypi-remote>/simple")
+# The Zone: nothing more to do. The image's pip-installed banff 3.2.0 is found automatically.
+# Elsewhere, once (official Banff 3.2.0 C libraries, sha256-pinned, no Python needed):
+banff::banff_install_binaries()
+# other sources: banff_install_binaries(wheel = "<path-or-url>.whl"); Artifactory/PyPI via `index =`
 ```
 
 ## Use
@@ -59,13 +58,14 @@ res$log          # C log, also echoed via message() unless options(banff.quiet =
 | [design/decisions.md](design/decisions.md) | decision log |
 | [design/plan.md](design/plan.md) | phases, open questions, risks |
 | [design/benchmarks.md](design/benchmarks.md) | R vs Python performance |
+| [design/adoption.md](design/adoption.md) | trust, production bar, reticulate vs bindings, paths to approval, bilingual |
 | [design/upstream-issues.md](design/upstream-issues.md) | draft issues for gensol-banff |
 
 ## Dev workflow
 
 ```sh
 # regenerate wrappers/docs after an upstream release (reads upstream source; no import)
-python3 tools/gen_procs.py <gensol-banff>/Python/src/banff/proc --version 3.1.3
+python3 tools/gen_procs.py <banff source or unzipped wheel>/banff/proc --version 3.2.0
 Rscript -e 'roxygen2::roxygenise()'
 # re-record golden fixtures (needs Python banff)
 (cd <gensol-banff>/Python/sample_programs/conversion_examples && python <r-banff>/tools/make_fixtures.py .)

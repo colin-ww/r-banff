@@ -1,5 +1,10 @@
 has_binaries <- function() file.exists(file.path(banff_lib_dir(), paste0(if (.Platform$OS.type != "windows") "lib", "verifyed_en", .Platform$dynlib.ext)))
-skip_if_no_binaries <- function() skip_if_not(has_binaries(), "Banff C libraries not installed (banff_install_binaries())")
+# In CI set BANFF_REQUIRE_BINARIES / BANFF_REQUIRE_PYTHON so a missing dependency fails instead of skipping
+require_or_skip <- function(ok, env, msg) {
+  if (ok) return(invisible())
+  if (nzchar(Sys.getenv(env))) fail(paste(msg, "but", env, "is set")) else skip(msg)
+}
+skip_if_no_binaries <- function() require_or_skip(has_binaries(), "BANFF_REQUIRE_BINARIES", "Banff C libraries not installed (banff_install_binaries())")
 
 has_py_banff <- function() {
   requireNamespace("reticulate", quietly = TRUE) &&

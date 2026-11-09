@@ -1,7 +1,7 @@
 {
   "proc": "outlier",
   "params": {
-    "method": "sigmagap",
+    "method": "SG",
     "beta_i": 0.5,
     "beta_e": 0.3,
     "unit_id": "ident",
@@ -14,6 +14,9 @@
     "outstatus_detailed",
     "outsummary"
   ],
-  "banff_version": "3.1.3",
-  "sample": "outlier04"
+  "banff_version": "3.2.0",
+  "sample": "outlier04",
+  "patched": {
+    "method": "SG"
+  }
 }

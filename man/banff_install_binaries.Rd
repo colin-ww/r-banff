@@ -8,38 +8,40 @@
 banff_install_binaries(
   version = banff_default_version(),
   index = getOption("banff.pypi_index", "https://pypi.org/simple"),
-  dest = banff_lib_dir(version),
+  dest = banff_user_dir(version),
   wheel = NULL
 )
 
 banff_lib_dir(version = banff_default_version())
 }
 \arguments{
-\item{version}{Banff version (PyPI version string). Taken from the file name when \code{wheel} is given.}
+\item{version}{Banff version. Taken from the file name when \code{wheel} is given.}
 
 \item{index}{Simple-index base URL. For Artifactory use something like
 \verb{https://artifactory.example/artifactory/api/pypi/pypi-remote/simple}.}
 
 \item{dest}{Destination folder.}
 
-\item{wheel}{Optional path to a local banff \code{.whl} file. If given, no download happens.}
+\item{wheel}{Optional local path or URL of a banff \code{.whl} file.}
 }
 \value{
 Path of the folder holding the libraries (invisibly).
 }
 \description{
 The C backend calls the official, unmodified Banff procedure libraries (\code{libdonorimp_en.so},
-\code{donorimp_en.dll}, ...). They ship inside the Python wheel, which is a plain zip file, so we
-download the wheel from a PyPI-compatible "simple" index (pypi.org, or an Artifactory PyPI
-mirror) and extract only the binaries. \strong{No Python is needed.}
+\code{donorimp_en.dll}, ...). They ship inside the Python wheel, which is a plain zip file, so R
+extracts them itself. \strong{No Python is needed.}
 }
 \details{
-Lookup order for the library folder: \code{options(banff.lib_dir)}, env var \code{BANFF_LIB_DIR},
-then \verb{tools::R_user_dir("banff", "data")/<version>/<platform>}. To reuse a pip-installed banff,
-point \code{banff.lib_dir} at \verb{<site-packages>/banff/proc/bin/<linux|windows>/x64}.
+\code{banff_install_binaries()} takes the wheel from, in order:
+\enumerate{
+\item \verb{wheel =}: a local \code{.whl} path or a URL (e.g. The Zone's \code{Sys.glob("/opt/vendor/banff-*.whl")});
+\item a built-in, sha256-pinned URL for this version and platform. For 3.2.0 (Linux), that's StatCan's public
+Zone image repo (\code{StatCan/zone-kubeflow-containers}), since 3.2.0 isn't on PyPI;
+\item a PyPI-compatible "simple" index (\code{index}): pypi.org (3.1.3) or an Artifactory PyPI repo.
+}
 
-On The Zone the \code{mid} images already ship banff, so nothing needs downloading. Either point
-\code{options(banff.lib_dir = "/opt/conda/lib/python3.14/site-packages/banff/proc/bin/linux/x64")} at
-the pip install, or install from the vendored wheel:
-\code{banff_install_binaries(wheel = Sys.glob("/opt/vendor/banff-*.whl"))}.
+\code{banff_lib_dir()} finds the libraries in this order: \code{options(banff.lib_dir)}, env var \code{BANFF_LIB_DIR},
+\verb{tools::R_user_dir("banff", "data")/<version>/<platform>}, then a \strong{pip-installed banff of the same
+version}. On The Zone that last one (\verb{/opt/conda/lib/python3.*/site-packages/banff}) means no setup at all.
 }
