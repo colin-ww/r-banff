@@ -28,7 +28,8 @@ banff_install_binaries <- function(version = banff_default_version(),
   if (!grepl("^https?://", url)) url <- paste0(sub("/$", "", index), "/banff/", url)  # relative link
 
   whl <- tempfile(fileext = ".whl")
-  on.exit(unlink(whl))
+  old <- options(timeout = max(600, getOption("timeout")))
+  on.exit({ unlink(whl); options(old) })
   utils::download.file(sub("#.*$", "", url), whl, mode = "wb", quiet = TRUE)
   check_sha256(whl, sub("^.*#sha256=", "", url))
 
@@ -62,7 +63,7 @@ check_sha256 <- function(path, expected) {
   } else if (requireNamespace("digest", quietly = TRUE)) {
     digest::digest(path, "sha256", file = TRUE)
   } else return(invisible())
-  if (!identical(tolower(got), tolower(expected))) stop("sha256 mismatch for downloaded wheel", call. = FALSE)
+  if (!isTRUE(tolower(as.vector(got)) == tolower(expected))) stop("sha256 mismatch for downloaded wheel", call. = FALSE)
 }
 
 #' Language of the Banff log ("en" or "fr")
