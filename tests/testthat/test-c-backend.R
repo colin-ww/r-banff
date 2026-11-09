@@ -34,12 +34,12 @@ test_that("pipe-first: indata is the first argument", {
   }
 })
 
-test_that("unknown params pass straight through to C (forward compat)", {
+test_that("unknown param names error (C would silently ignore them), opt-out works", {
+  expect_error(verifyedits(edits = "x >= 0;", acept_negative = TRUE), "did you mean `accept_negative`")
   skip_if_no_binaries()
-  # C rejects/ignores unknown keys itself; we only check R does not block them
-  out <- tryCatch(withr::with_options(list(banff.quiet = TRUE), verifyedits(edits = "x >= 0;", not_a_real_option = 1)),
-                  banff_error = function(e) "c-rejected")
-  expect_true(inherits(out, "banff_result") || identical(out, "c-rejected"))
+  r <- withr::with_options(list(banff.quiet = TRUE, banff.pass_unknown = TRUE),
+                           verifyedits(edits = "x >= 0;", some_future_option = 1))
+  expect_s3_class(r, "banff_result")
 })
 
 test_that("French build loads with banff.language = 'fr'", {

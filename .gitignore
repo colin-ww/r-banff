@@ -4,3 +4,5 @@ src/*.o
 src/*.so
 src/*.dll
 bench/results/*.rds
+bench/data/
+bench/results/

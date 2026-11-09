@@ -10,11 +10,15 @@
 #'
 #' @param proc Procedure short name, e.g. `"donorimp"`.
 #' @param args Named list of the wrapper's formal arguments.
-#' @param dots Extra parameters passed through to Banff unchanged.
+#' @param dots Extra parameters. Banff's C code silently *ignores* unknown parameter names, so a
+#'   typo (`acept_negative = TRUE`) would change results without any message. Unknown names are
+#'   therefore an error, unless `options(banff.pass_unknown = TRUE)` (e.g. to use a parameter
+#'   added in a newer Banff release than this package was generated for).
 #' @return A `banff_result`.
 #' @export
 banff_run <- function(proc, args, dots = list()) {
   spec <- .banff_specs[[proc]]
+  check_unknown(names(dots), c(spec$c_parms, names(args)))
   backend <- getOption("banff.backend", "c")
   req <- requested_outputs(spec, args)
   parms <- c(args[spec$c_parms], dots) |> compact() |> collapse_parms()
@@ -26,6 +30,18 @@ banff_run <- function(proc, args, dots = list()) {
     python = run_python(proc, spec, inputs, parms, opts, req),
     stop("unknown `banff.backend`: ", backend, call. = FALSE)
   )
+}
+
+check_unknown <- function(nms, known) {
+  bad <- setdiff(nms, known)
+  if (!length(bad) || isTRUE(getOption("banff.pass_unknown", FALSE))) return(invisible())
+  hint <- vapply(bad, function(b) {
+    m <- agrep(b, known, max.distance = 2, value = TRUE)
+    if (length(m)) sprintf("`%s` (did you mean `%s`?)", b, m[1]) else sprintf("`%s`", b)
+  }, character(1))
+  stop("Unknown Banff parameter(s): ", paste(hint, collapse = ", "),
+       "\nBanff's C code ignores unknown names silently. Set `options(banff.pass_unknown = TRUE)` ",
+       "to pass them anyway.", call. = FALSE)
 }
 
 .r_side_opts <- c("presort", "prefill_by_vars", "exclude_where_indata", "exclude_where_indata_hist")
@@ -153,7 +169,9 @@ sort_by_vars <- function(df, by) {
   cols <- match_cols(df, by)
   if (anyNA(cols)) cols <- character()  # upstream: missing BY vars -> sort skipped (C reports issues)
   if (!length(cols)) return(df)
-  df[do.call(order, c(unname(as.list(df[cols])), method = "radix")), , drop = FALSE]
+  o <- do.call(order, c(unname(as.list(df[cols])), method = "radix"))  # radix: stable, C-locale like pyarrow
+  if (!is.unsorted(o)) return(df)  # already sorted: skip the copy (big win for arrow/ALTREP-backed data)
+  vctrs::vec_slice(df, o)          # ~2-8x faster than `[.data.frame`
 }
 
 prefill_by_vars <- function(status, data, uid, by) {

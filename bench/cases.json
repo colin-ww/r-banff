@@ -1,0 +1,15 @@
+{
+  "sizes": [1000, 10000, 100000, 1000000],
+  "reps": 5,
+  "cases": [
+    {"name": "editstats", "proc": "editstat", "inputs": ["indata"],
+     "params": {"edits": "Q1 + Q2 + Q3 + Q4 - TOTAL = 0; Q1 >= 0; Q2 >= 0; Q3 >= 0; Q4 >= 0;", "by": "PROV"}},
+    {"name": "outlier", "proc": "outlier", "inputs": ["indata"],
+     "params": {"unit_id": "IDENT", "var": "TOTAL", "method": "current", "mii": 3, "mei": 2, "mdm": 0.05, "by": "PROV"}},
+    {"name": "errorloc", "proc": "errorloc", "inputs": ["indata"],
+     "params": {"unit_id": "IDENT", "edits": "Q1 + Q2 + Q3 + Q4 - TOTAL = 0; Q1 >= 0; Q2 >= 0; Q3 >= 0; Q4 >= 0;", "by": "PROV", "seed": 1}},
+    {"name": "donorimp", "proc": "donorimp", "inputs": ["indata", "instatus"],
+     "params": {"unit_id": "IDENT", "edits": "Q1 + Q2 + Q3 + Q4 - TOTAL = 0;", "post_edits": "Q1 + Q2 + Q3 + Q4 - TOTAL <= 0;",
+                "min_donors": 1, "percent_donors": 1, "n": 3, "by": "PROV", "seed": 1, "accept_negative": true}}
+  ]
+}

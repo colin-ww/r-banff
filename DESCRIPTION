@@ -14,7 +14,8 @@ Depends: R (>= 4.1)
 Imports:
     jsonlite,
     nanoarrow (>= 0.5),
-    tibble
+    tibble,
+    vctrs
 Suggests:
     bench,
     DBI,
