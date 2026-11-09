@@ -54,3 +54,18 @@ test_that("factor columns are accepted (converted to character)", {
   r <- withr::with_options(list(banff.quiet = TRUE), editstats(d, edits = "x >= 0; y >= 0;"))
   expect_s3_class(r, "banff_result")
 })
+
+test_that("exclude_where_indata (SQL) == equivalent data_excl_var flag (DonorImp01)", {
+  skip_if_no_binaries()
+  skip_if_not_installed("duckdb")
+  source(system.file("extdata/donorimp01.R", package = "banff"), local = TRUE)
+  run <- function(...) withr::with_options(list(banff.quiet = TRUE), donorimp(
+    donor_indata, instatus = donor_instatus, unit_id = "IDENT", by = "prov", seed = 1,
+    edits = "Q1 + Q2 + Q3 + Q4 - TOTAL = 0;", post_edits = "Q1 + Q2 + Q3 + Q4 - TOTAL <= 0;",
+    min_donors = 1, percent_donors = 1, n = 1, n_limit = 1, mrl = 0.5, random = TRUE,
+    eligdon = "original", accept_negative = TRUE, must_match = "STAFF", ...))
+  a <- run(data_excl_var = "TOEXCL")
+  b <- run(exclude_where_indata = "TOTAL > 1000")
+  for (o in c("outdata", "outstatus", "outdonormap")) expect_identical(b[[o]], a[[o]], label = o)
+  expect_match(b$log, "_exclude")
+})

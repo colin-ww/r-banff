@@ -12,7 +12,10 @@
 ## Phase 1: usable internally on The Zone (Linux)
 - [ ] Try on RStudio Server in The Zone. Check: compiler present? `R_user_dir` writable? Log shown in console?
 - [ ] `banff_install_binaries()` against **Artifactory's PyPI remote** (index URL, auth?, sha256 in links?)
-- [ ] Perf: avoid the R-side presort copy when the data is already sorted (see benchmarks); profile output conversion
+- [x] Perf: presort skips already-sorted data and uses `vctrs::vec_slice` instead of `[.data.frame` (editstats 1e6: 1.36 → 1.09 s on arrow-backed input)
+- [ ] Perf: arrow/duckdb inputs are currently converted to data.frame for preprocessing. That forces arrow's lazy ALTREP columns to
+      materialise (~0.45 s per 1e6 rows). Instead, pass Arrow objects straight to C when no preprocessing is needed, and sort in
+      Arrow (`arrow::arrange()`/duckdb) when it is
 - [ ] Version guard. Refuse libraries whose version ≠ the generated spec version, because an ABI mismatch means a segfault.
       Idea: check the binary folder's version, or a known symbol, before calling.
 - [ ] Port more upstream tests: `Python/tests/regression_tests` (methodologist-written) → more fixtures
