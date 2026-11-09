@@ -11,7 +11,10 @@ banff_run(proc, args, dots = list())
 
 \item{args}{Named list of the wrapper's formal arguments.}
 
-\item{dots}{Extra parameters passed through to Banff unchanged.}
+\item{dots}{Extra parameters. Banff's C code silently \emph{ignores} unknown parameter names, so a
+typo (\code{acept_negative = TRUE}) would change results without any message. Unknown names are
+therefore an error, unless \code{options(banff.pass_unknown = TRUE)} (e.g. to use a parameter
+added in a newer Banff release than this package was generated for).}
 }
 \value{
 A \code{banff_result}.

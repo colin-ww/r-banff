@@ -17,9 +17,10 @@ Imports:
     tibble,
     vctrs
 Suggests:
-    bench,
     DBI,
+    digest,
     duckdb,
+    openssl,
     reticulate,
     testthat (>= 3.0.0),
     withr

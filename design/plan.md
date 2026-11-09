@@ -16,7 +16,7 @@
 - [ ] Version guard. Refuse libraries whose version ≠ the generated spec version, because an ABI mismatch means a segfault.
       Idea: check the binary folder's version, or a known symbol, before calling.
 - [ ] Port more upstream tests: `Python/tests/regression_tests` (methodologist-written) → more fixtures
-- [ ] `R CMD check` clean. GitLab CI: check + tests on every push. Monthly job against the latest upstream
+- [ ] `R CMD check` clean (now: tests pass; 1 NOTE = intentional `stdout` fd redirect in shim, CRAN-only concern). GitLab CI: check + tests on every push. Monthly job against the latest upstream
 - [ ] Release script: `gen_procs.py` → `roxygenise` → `make_fixtures.py` → `devtools::test()` → bump
 - [ ] README tutorial: one SAS-migration example in R (mirror `docs/EN/sas_migration_tutorial.md`)
 
