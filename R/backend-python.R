@@ -20,9 +20,11 @@ py_banff <- function() {
 
 run_python <- function(proc, spec, inputs, parms, opts, req) {
   bf <- py_banff()
-  # pandas, not pyarrow, for outputs: reticulate converts pandas -> data.frame, not pyarrow
-  out_spec <- lapply(req, function(r) if (r) "pandas" else FALSE)
-  ins <- lapply(inputs, function(x) reticulate::r_to_py(to_arrowable(as.data.frame(x))))
+  # Data crosses R <-> Python as Arrow (C stream interface), NOT via reticulate's
+  # data.frame <-> pandas conversion: that path loses types (e.g. an all-NA character column
+  # becomes pandas object/None -> pyarrow `null` -> Banff C: "must be character, but it is unknown").
+  out_spec <- lapply(req, function(r) if (r) "pyarrow" else FALSE)
+  ins <- lapply(inputs, r_to_pyarrow)
   args <- c(ins, parms, opts, out_spec, list(capture = TRUE))
 
   res <- tryCatch(
@@ -30,15 +32,23 @@ run_python <- function(proc, spec, inputs, parms, opts, req) {
     error = function(e) stop(structure(class = c("banff_error", "error", "condition"),
                                        list(message = conditionMessage(e), call = NULL, rc = NA_integer_, log = NULL)))
   )
-  outputs <- lapply(names(req)[req], function(nm) py_df_to_r(res[[nm]])) |> stats::setNames(names(req)[req])
+  outputs <- lapply(names(req)[req], function(nm) pyarrow_to_r(res[[nm]])) |> stats::setNames(names(req)[req])
   new_result(proc, outputs, NULL, "python")
 }
 
-# pandas DataFrame (with pyarrow-backed string dtype) -> tibble
-py_df_to_r <- function(df) {
-  # force plain object/float64 dtypes first; pyarrow-backed dtypes convert badly via reticulate
-  df <- df$astype("object")$infer_objects()
-  out <- reticulate::py_to_r(df)
-  attr(out, "pandas.index") <- NULL
-  tibble::as_tibble(out)
+# R -> pyarrow.Table, zero-copy-ish via the Arrow C stream interface (pyarrow takes ownership)
+r_to_pyarrow <- function(x) {
+  stream <- nanoarrow::as_nanoarrow_array_stream(to_arrowable(x))
+  pa <- reticulate::import("pyarrow", convert = FALSE)
+  addr <- reticulate::import_builtins(convert = FALSE)$int(nanoarrow::nanoarrow_pointer_addr_chr(stream))
+  pa$RecordBatchReader$`_import_from_c`(addr)$read_all()
+}
+
+# pyarrow.Table -> tibble, same bridge in reverse
+pyarrow_to_r <- function(tbl) {
+  pa <- reticulate::import("pyarrow", convert = FALSE)
+  dst <- nanoarrow::nanoarrow_allocate_array_stream()
+  addr <- reticulate::import_builtins(convert = FALSE)$int(nanoarrow::nanoarrow_pointer_addr_chr(dst))
+  pa$RecordBatchReader$from_batches(tbl$schema, tbl$to_batches())$`_export_to_c`(addr)
+  tibble::as_tibble(as.data.frame(dst))
 }

@@ -1,0 +1,18 @@
+{
+  "proc": "editstat",
+  "params": {
+    "edits": "\n        x1+1>=x2;\n        x1<=5;\n        x2>=x3;\n        x1+x2+x3<=9;\n    ",
+    "by": "Group",
+    "accept_negative": true
+  },
+  "outputs": [
+    "outedit_applic",
+    "outedit_status",
+    "outglobal_status",
+    "outk_edits_status",
+    "outedits_reduced",
+    "outvars_role"
+  ],
+  "banff_version": "3.1.3",
+  "sample": "editstats01"
+}

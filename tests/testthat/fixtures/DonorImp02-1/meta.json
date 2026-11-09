@@ -1,0 +1,24 @@
+{
+  "proc": "donorimp",
+  "params": {
+    "outmatching_fields": true,
+    "unit_id": "REC",
+    "edits": "x=y;",
+    "post_edits": "x<=y;",
+    "min_donors": 1,
+    "percent_donors": 1,
+    "n": 1,
+    "display_level": 1,
+    "n_limit": 1,
+    "rand_num_var": "randkey",
+    "seed": 20261109
+  },
+  "outputs": [
+    "outdata",
+    "outstatus",
+    "outdonormap",
+    "outmatching_fields"
+  ],
+  "banff_version": "3.1.3",
+  "sample": "DonorImp02"
+}

@@ -1,0 +1,15 @@
+{
+  "proc": "determin",
+  "params": {
+    "edits": "Q1 + Q2 + Q3 + Q4 - TOTAL = 0;",
+    "accept_negative": true,
+    "unit_id": "ident",
+    "by": "prov"
+  },
+  "outputs": [
+    "outdata",
+    "outstatus"
+  ],
+  "banff_version": "3.1.3",
+  "sample": "Determin01"
+}
