@@ -1,0 +1,53 @@
+# R CMD check + testthat against the official Banff C libraries.
+# Python is only installed for the python-backend parity test (R <-> Python banff, same version).
+name: R-CMD-check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  R-CMD-check:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      BANFF_WHEEL: https://raw.githubusercontent.com/StatCan/zone-kubeflow-containers/1f877f03f8e8e5b8d84a80b25abc04ccd4e0fcee/images/mid/vendor/banff-3.2.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck, any::reticulate, any::openssl, local::.
+          needs: check
+
+      - name: Install Banff C libraries (official 3.2.0 wheel, sha256-pinned, no Python)
+        run: |
+          Rscript -e 'banff::banff_install_binaries(dest = file.path(Sys.getenv("RUNNER_TEMP"), "banff-libs"))'
+          echo "BANFF_LIB_DIR=$RUNNER_TEMP/banff-libs" >> "$GITHUB_ENV"
+          echo "BANFF_REQUIRE_BINARIES=true" >> "$GITHUB_ENV"   # tests fail instead of skip if libs missing
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python banff 3.2.0 (for the python-backend parity test)
+        run: |
+          python -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet "$BANFF_WHEEL"
+          echo "RETICULATE_PYTHON=$RUNNER_TEMP/venv/bin/python" >> "$GITHUB_ENV"
+          echo "BANFF_REQUIRE_PYTHON=true" >> "$GITHUB_ENV"
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual")'
+          error-on: '"error"'
+          upload-snapshots: true

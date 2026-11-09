@@ -1,0 +1,18 @@
+{
+  "proc": "errorloc",
+  "params": {
+    "edits": "X+Y>=6; X<=4; Y<=5;",
+    "unit_id": "REC",
+    "rand_num_var": "randkey",
+    "seed": 20261109
+  },
+  "outputs": [
+    "outstatus",
+    "outreject"
+  ],
+  "banff_version": "3.2.0",
+  "sample": "Errorloc02",
+  "patched": {
+    "seed": 20261109
+  }
+}

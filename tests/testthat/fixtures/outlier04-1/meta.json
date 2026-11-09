@@ -1,0 +1,22 @@
+{
+  "proc": "outlier",
+  "params": {
+    "method": "SG",
+    "beta_i": 0.5,
+    "beta_e": 0.3,
+    "unit_id": "ident",
+    "var": "X01 X02",
+    "with_var": "X01 X01",
+    "by": "Prov"
+  },
+  "outputs": [
+    "outstatus",
+    "outstatus_detailed",
+    "outsummary"
+  ],
+  "banff_version": "3.2.0",
+  "sample": "outlier04",
+  "patched": {
+    "method": "SG"
+  }
+}

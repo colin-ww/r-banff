@@ -1,0 +1,32 @@
+{
+  "proc": "donorimp",
+  "params": {
+    "outmatching_fields": true,
+    "unit_id": "IDENT",
+    "edits": "Q1 + Q2 + Q3 + Q4 - TOTAL = 0;",
+    "post_edits": "Q1 + Q2 + Q3 + Q4 - TOTAL <= 0;",
+    "min_donors": 1,
+    "percent_donors": 1,
+    "n": 1,
+    "n_limit": 1,
+    "mrl": 0.5,
+    "random": true,
+    "eligdon": "original",
+    "accept_negative": true,
+    "must_match": "STAFF",
+    "data_excl_var": "TOEXCL",
+    "by": "prov",
+    "seed": 20261109
+  },
+  "outputs": [
+    "outdata",
+    "outstatus",
+    "outdonormap",
+    "outmatching_fields"
+  ],
+  "banff_version": "3.2.0",
+  "sample": "DonorImp01",
+  "patched": {
+    "seed": 20261109
+  }
+}

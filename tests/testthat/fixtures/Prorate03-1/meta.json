@@ -1,0 +1,21 @@
+{
+  "proc": "prorate",
+  "params": {
+    "edits": "Q1+4Q2+2Q3+Q4=YEAR;",
+    "method": "BASIC",
+    "decimal": 1,
+    "lower_bound": -100,
+    "upper_bound": 100,
+    "modifier": "always",
+    "accept_negative": true,
+    "unit_id": "ident"
+  },
+  "outputs": [
+    "outdata",
+    "outstatus",
+    "outreject"
+  ],
+  "banff_version": "3.2.0",
+  "sample": "Prorate03",
+  "patched": {}
+}

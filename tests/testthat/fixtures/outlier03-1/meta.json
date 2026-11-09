@@ -1,0 +1,23 @@
+{
+  "proc": "outlier",
+  "params": {
+    "method": "HB",
+    "mii": 1.5,
+    "mei": 1.3,
+    "mdm": 0.05,
+    "outlier_stats": true,
+    "unit_id": "ident",
+    "var": "X01 X02",
+    "by": "Prov"
+  },
+  "outputs": [
+    "outstatus",
+    "outstatus_detailed",
+    "outsummary"
+  ],
+  "banff_version": "3.2.0",
+  "sample": "outlier03",
+  "patched": {
+    "method": "HB"
+  }
+}

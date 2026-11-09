@@ -1,0 +1,21 @@
+{
+  "proc": "errorloc",
+  "params": {
+    "edits": "x1>=-5; x1<=15; x2>=30; x1+x2<=50;",
+    "weights": "x1=1.5;",
+    "cardinality": 2,
+    "time_per_obs": 0.1,
+    "unit_id": "IDENT",
+    "by": "ZONE",
+    "seed": 20261109
+  },
+  "outputs": [
+    "outstatus",
+    "outreject"
+  ],
+  "banff_version": "3.2.0",
+  "sample": "Errorloc01",
+  "patched": {
+    "seed": 20261109
+  }
+}

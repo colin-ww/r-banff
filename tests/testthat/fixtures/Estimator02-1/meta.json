@@ -1,0 +1,24 @@
+{
+  "proc": "estimato",
+  "params": {
+    "data_excl_var": "CURRDATAEXCL",
+    "hist_excl_var": "HISTDATAEXCL",
+    "by": "prov",
+    "unit_id": "ident",
+    "seed": 20261109
+  },
+  "outputs": [
+    "outstatus",
+    "outdata",
+    "outacceptable",
+    "outest_ef",
+    "outest_lr",
+    "outest_parm",
+    "outrand_err"
+  ],
+  "banff_version": "3.2.0",
+  "sample": "Estimator02",
+  "patched": {
+    "seed": 20261109
+  }
+}
