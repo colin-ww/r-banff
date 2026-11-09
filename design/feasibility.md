@@ -11,7 +11,8 @@ Status: spike done 2026-11-09, against Banff **3.1.3** (PyPI). Verdict: **feasib
 - Spike results:
   - Output **identical to Python banff** on all 15 upstream sample-program calls (all 9 procedures).
   - Install: ~30 MB (official binaries + `nanoarrow` + `jsonlite` + `tibble`) vs ~340 MB Python env.
-  - Speed: same or faster than going through reticulate. The C code dominates at large n. Details in [benchmarks.md](benchmarks.md).
+  - Speed: **on par with Python banff**, 0.8–1.2× of Python+pyarrow at ≥100k rows, and 2–10× faster than DIY reticulate.
+    Small calls add ~2–6 ms. Heavy procs are C-bound, so every path ties. Details in [benchmarks.md](benchmarks.md).
   - The C log gets captured into R, so it's visible in RStudio. With Python it goes to C stdout and RStudio never shows it.
 - Keep a reticulate backend only as a test oracle / fallback, not as the main path.
 
@@ -49,7 +50,7 @@ Facts that make an R binding easy:
 | Install | pip env + reticulate config + locale workaround | same + R pkg | same + script | R pkg (+ tiny C shim) + 9 MB wheel download | R pkg |
 | Type fidelity | **poor**: R→pandas loses types (see below) | ok if bridged via Arrow (done in prototype) | ok via parquet | **exact** (Arrow end to end) | n/a |
 | C log in RStudio | lost (C stdout) unless `capture=True` | ok (Python reprints) | ok (captured stdout) | **ok** (fd redirect → `$log` + message) | n/a |
-| Per-call overhead | ~10–30 ms + pandas copies | ~5–10 ms | **≥0.5 s** (`import banff`) + file I/O | **~1–5 ms** | n/a |
+| Per-call overhead | ~20–30 ms + pandas copies (2–10× slower than D) | ~5–10 ms | **≥0.5 s** (`import banff`) + file I/O | **~2–6 ms** | n/a |
 | Crash isolation | none (segfault kills R) | none | **yes** (separate process) | none (can add via `callr`) | n/a |
 | Tracks upstream | automatic | automatic for params | automatic | regenerate per release (scripted) | **never**: forks the methodology |
 | Maintenance | none, but every user pays the pain | low | low-med (serialization, errors via exit codes) | low (generated) + ABI watch | huge (LP solver, Chernikova, KD-tree, …) + re-validation |

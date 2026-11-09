@@ -11,7 +11,7 @@ and no pandas involved.
 
 - Output is identical to Python banff on all upstream sample programs (all 9 procedures). See `tests/`.
 - Install is ~30 MB, against ~340 MB for a Python banff environment.
-- It's as fast as Python banff or faster. The C log shows up in RStudio.
+- Speed is on par with Python banff and 2–10× faster than calling Python banff via reticulate yourself. The C log shows up in RStudio.
 
 ## Install (prototype)
 

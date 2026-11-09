@@ -4,7 +4,7 @@ Format: decision · why · alternatives rejected · revisit when. Newest last.
 
 ### D1. Call the C libraries directly. Python is not the default path
 - **Why:** the C ABI is simple and language-neutral (JSON + Arrow C data). This removes ~340 MB of Python deps,
-  the pandas type-conversion bugs and the locale crash. Results are identical (15/15 fixtures). Speed is the same or better.
+  the pandas type-conversion bugs and the locale crash. Results are identical (15/15 fixtures). Speed is on par with Python banff and 2–10× faster than DIY reticulate.
 - **Rejected:** reticulate as the main path (heavy, type pain, invisible log). bash/CLI (≥0.5 s per call, still needs Python).
   Porting (forks the methodology, huge validation burden).
 - **Revisit if:** upstream moves real logic from C into Python, or declares the C ABI private and starts breaking it.
