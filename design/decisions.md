@@ -65,3 +65,9 @@ Format: decision · why · alternatives rejected · revisit when. Newest last.
 ### D12. Pin a seed in fixtures when a sample omits it
 - **Why:** without `seed`, C uses a time-based seed (`seed = 1794196017 (value chosen by the system)`), so
   Estimator01/02 and MassImp01 weren't reproducible. That's not a wrapper bug.
+
+### D13. Keep the core system-agnostic (G-Confid and other gensys systems next)
+- **Why:** `StatCan/gensol-gconfid` uses the same `_common` gensys framework and the same JSON + Arrow C ABI
+  (`sensitiv`). Its other three modules are pure Python (PuLP/HiGHS).
+- So: shim, loader and runner stay generic. Only the generated spec is per-system. Python-only modules
+  use the reticulate + Arrow bridge.

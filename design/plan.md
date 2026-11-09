@@ -38,11 +38,17 @@ Needed for: macOS/arm64, CRAN, or if upstream stops publishing wheels.
 - [ ] Pitch gensol: document the C ABI as a supported interface. An official R package could live upstream
       (e.g. `R/` beside `Python/`), sharing CI
 
+## Phase 5: other gensys systems (G-Confid first)
+- [ ] Split the system-agnostic parts into a small core (shim, loader, runner, Arrow bridge): working name `gensysr`
+- [ ] `gconfid` R package. Sensitivity via direct C (same ABI pattern). Suppression/Auditing/Rounding are pure Python (PuLP/HiGHS),
+      so use reticulate + Arrow bridge, or evaluate a port on CRAN `highs`
+- [ ] Generator takes the system name and proc dir, and drops the hard-coded "expect 9 procedures"
+
 ## Open questions (need you / others)
-1. **G-Confid R wrapper ("SuppressR"/"yoho"?)**: not found publicly. Link to the internal repo? What did they choose and why?
+1. **G-Confid R wrapper ("SuppressR"/"yoho"?)**: `StatCan/gensol-gconfid` has no R code; nothing on CRAN/GitHub/PyPI either. Is there an internal repo? What did they choose and why?
 2. **Name**: `banff` (mirrors Python, implies official) or `rbanff` while unofficial?
 3. **Audience**: just your team, or StatCan-wide? This decides how much Phase 2 matters.
-4. **Artifactory**: is there a PyPI remote reachable from The Zone? What's the URL? Can an R binary package be published there?
+4. **Artifactory**: gconfid's README confirms `artifactory.cloud.statcan.ca` hosts PyPI packages (`pypi-local`). Is banff there, and reachable from The Zone? Can R binary packages be published there too?
 5. **Compiler on The Zone RStudio image**: is gcc present? If not, Phase 2 binary packages become Phase 1.
 6. **gensol relationship**: give them a heads-up early? They may change the C ABI. Better they know an R binding exists.
 7. **3.2.1 internal**: is the ABI unchanged vs 3.1.3? Running `gen_procs.py` on 3.2.1 sources and diffing would tell us.

@@ -129,15 +129,30 @@ Yes, but less than it seems:
 
 ## G-Confid precedent (gconfid py → R, "SuppressR"/"yoho"?)
 
-- I found nothing public: no CRAN package, no GitHub repo, no PyPI package. StatCan's
-  [2024/25 methodology report](https://www150.statcan.gc.ca/n1/pub/12-206-x/2025001/04-eng.htm)
-  only mentions a beta Python G-Confid. So it's probably on internal GitLab.
-- **Open question:** please share the internal repo. Worth checking there:
-  1. reticulate or something else?
-  2. how they ship or locate the Python env
-  3. pandas conversion handling
-  4. whether the core is Python (then D isn't possible and reticulate is the only option) or C/LP-solver like Banff
+What I looked at: [`StatCan/gensol-gconfid`](https://github.com/StatCan/gensol-gconfid) (public; Python production
+release 2026-04-30; on Artifactory `pypi-local`).
+
+- **No R code in that repo.** No `SuppressR` or `yoho` on GitHub, CRAN or PyPI either. If an R wrapper
+  exists, it's internal (GitLab). → Open question: link?
+- **The same gensys framework as Banff.** `gconfid/_common` is a variant of `banff/_common`: the same
+  `GeneralizedProcedure`, loader, JSON + Arrow C ABI and nls code. So the same NoneType locale bug probably applies.
+- **But only 1 of its 4 modules is C.**
+
+  | Module | Implementation | R route |
+  |---|---|---|
+  | Sensitivity | C (`int sensitiv(json, ArrowArrayStream*, 5 × out schema/array)`) | **direct C, same shim/generator as here** |
+  | Suppression | pure Python + PuLP/HiGHS LP | reticulate (Arrow bridge), or a port on CRAN `highs` |
+  | Auditing | pure Python + LP | same |
+  | Optimized rounding | pure Python + LP | same |
+
+- **Implication: generalise.** The shim, loader and runner here are system-agnostic. Only `.banff_specs` and the
+  generator's input are Banff-specific. One small shared core (working name `gensysr`) plus generated per-system
+  packages (`banff`, `gconfid`, …) would cover every gensys system that has a C engine. Python-only modules fall back to
+  the reticulate + Arrow bridge proven here (D11). See plan phase 5.
 - Related public precedent: [`gseries`](https://cran.r-project.org/package=gseries) is a *port* (SAS → R, on CRAN).
+- Artifactory answer (from the gconfid README): StatCan hosts PyPI packages at
+  `artifactory.cloud.statcan.ca` (`pypi-local`). So `banff_install_binaries(index = ".../api/pypi/pypi-local/simple")`
+  should work on The Zone, and could fetch internal-only versions such as 3.2.1. Still to verify.
 
 ## What the spike proved (reproducible in this repo)
 

@@ -18,6 +18,10 @@ import banff
 
 **Workaround:** `locale.setlocale(locale.LC_CTYPE, "C.UTF-8")` before importing.
 
+**Note:** G-Confid's newer copy of the shared `_common` (`gconfid/_common/src/nls/nls.py`) already restructured
+`determine_language()`: it catches `ValueError` too and falls back to `$LANG`. Banff may only need a `_common` sync.
+Check whether internal 3.2.1 already has it before filing.
+
 ## 2. Unknown parameters are silently ignored by the C procedures
 
 `verifyedits` (and the others) accept unknown JSON keys without a message. Python front-end users are
