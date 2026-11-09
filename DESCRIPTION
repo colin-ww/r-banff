@@ -1,0 +1,26 @@
+Package: banff
+Title: R Interface to the 'Banff' Statistical Data Editing Procedures
+Version: 0.0.0.9000
+Authors@R: person("Colin", "Weaver", email = "colingweaver@gmail.com", role = c("aut", "cre"))
+Description: Calls the nine 'Banff' procedures (Statistics Canada) for statistical data
+    editing and imputation (verifyedits, editstats, outlier, errorloc, deterministic,
+    donorimp, estimator, prorate, massimp) from R. By default calls the official Banff C
+    libraries directly via the Arrow C data interface (no Python needed); can also go
+    through the Python 'banff' package with 'reticulate'.
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.1.1
+Depends: R (>= 4.1)
+Imports:
+    jsonlite,
+    nanoarrow (>= 0.5),
+    tibble
+Suggests:
+    bench,
+    DBI,
+    duckdb,
+    reticulate,
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3
