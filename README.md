@@ -16,11 +16,16 @@ and no pandas involved.
 ## Install (prototype)
 
 ```r
-# install.packages("remotes")
-remotes::install_github("colin-ww/r-banff")    # needs a C compiler (tiny shim)
-banff::banff_install_binaries()                # once: fetches the official wheel from PyPI and extracts the .so/.dll
-# behind Artifactory:
-# options(banff.pypi_index = "https://<artifactory>/artifactory/api/pypi/<pypi-remote>/simple")
+# needs a C compiler (tiny shim); The Zone's images have gcc
+pak::pak("git::https://github.com/colin-ww/r-banff.git")         # tested
+# pak::pak("colin-ww/r-banff")   # also fine where api.github.com is reachable
+# GitLab mirror: pak::pak("git::https://<gitlab-host>/<group>/r-banff.git")
+
+# then once, pick ONE source for the official Banff C libraries:
+banff::banff_install_binaries()                                     # from PyPI (3.1.3)
+banff::banff_install_binaries(wheel = Sys.glob("/opt/vendor/banff-*.whl"))  # The Zone: vendored wheel (3.2.0)
+options(banff.lib_dir = "/opt/conda/lib/python3.14/site-packages/banff/proc/bin/linux/x64")  # or reuse the image's pip install
+# behind Artifactory: options(banff.pypi_index = "https://<artifactory>/artifactory/api/pypi/<pypi-remote>/simple")
 ```
 
 ## Use

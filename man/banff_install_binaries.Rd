@@ -8,18 +8,21 @@
 banff_install_binaries(
   version = banff_default_version(),
   index = getOption("banff.pypi_index", "https://pypi.org/simple"),
-  dest = banff_lib_dir(version)
+  dest = banff_lib_dir(version),
+  wheel = NULL
 )
 
 banff_lib_dir(version = banff_default_version())
 }
 \arguments{
-\item{version}{Banff version (PyPI version string).}
+\item{version}{Banff version (PyPI version string). Taken from the file name when \code{wheel} is given.}
 
 \item{index}{Simple-index base URL. For Artifactory use something like
 \verb{https://artifactory.example/artifactory/api/pypi/pypi-remote/simple}.}
 
 \item{dest}{Destination folder.}
+
+\item{wheel}{Optional path to a local banff \code{.whl} file. If given, no download happens.}
 }
 \value{
 Path of the folder holding the libraries (invisibly).
@@ -34,4 +37,9 @@ mirror) and extract only the binaries. \strong{No Python is needed.}
 Lookup order for the library folder: \code{options(banff.lib_dir)}, env var \code{BANFF_LIB_DIR},
 then \verb{tools::R_user_dir("banff", "data")/<version>/<platform>}. To reuse a pip-installed banff,
 point \code{banff.lib_dir} at \verb{<site-packages>/banff/proc/bin/<linux|windows>/x64}.
+
+On The Zone the \code{mid} images already ship banff, so nothing needs downloading. Either point
+\code{options(banff.lib_dir = "/opt/conda/lib/python3.14/site-packages/banff/proc/bin/linux/x64")} at
+the pip install, or install from the vendored wheel:
+\code{banff_install_binaries(wheel = Sys.glob("/opt/vendor/banff-*.whl"))}.
 }

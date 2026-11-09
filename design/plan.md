@@ -10,7 +10,11 @@
 - [x] Write up feasibility / spec / decisions / upstream issue drafts
 
 ## Phase 1: usable internally on The Zone (Linux)
-- [ ] Try on RStudio Server in The Zone. Check: compiler present? `R_user_dir` writable? Log shown in console?
+- [ ] Try on RStudio Server in The Zone. Compiler: present per the image Dockerfile (gcc, R 4.6.1). Still check: install from a
+      GitLab mirror (`pak::pak("git::https://<gitlab>/...")`), `R_user_dir` writable?, log shown in console?
+- [x] Zone binaries: use the image's pip-installed banff 3.2.0 (`banff.lib_dir`) or `banff_install_binaries(wheel = "/opt/vendor/banff-*.whl")`
+- [ ] Decide the target version: Zone = 3.2.0 (internal), PyPI = 3.1.3. Probably generate for 3.2.0 and re-record fixtures
+      with 3.2.0 Python (the outlier samples need `method = "HB"`), or generate specs per version and pick at load time
 - [ ] `banff_install_binaries()` against **Artifactory's PyPI remote** (index URL, auth?, sha256 in links?)
 - [x] Perf: presort skips already-sorted data and uses `vctrs::vec_slice` instead of `[.data.frame` (editstats 1e6: 1.36 → 1.09 s on arrow-backed input)
 - [ ] Perf: arrow/duckdb inputs are currently converted to data.frame for preprocessing. That forces arrow's lazy ALTREP columns to
@@ -51,7 +55,7 @@ Needed for: macOS/arm64, CRAN, or if upstream stops publishing wheels.
 1. **G-Confid R wrapper ("SuppressR"/"yoho"?)**: `StatCan/gensol-gconfid` has no R code; nothing on CRAN/GitHub/PyPI either. Is there an internal repo? What did they choose and why?
 2. **Name**: `banff` (mirrors Python, implies official) or `rbanff` while unofficial?
 3. **Audience**: just your team, or StatCan-wide? This decides how much Phase 2 matters.
-4. **Artifactory**: gconfid's README confirms `artifactory.cloud.statcan.ca` hosts PyPI packages (`pypi-local`). Is banff there, and reachable from The Zone? Can R binary packages be published there too?
+4. **Artifactory** (less urgent now that the Zone image ships banff): gconfid's README confirms `artifactory.cloud.statcan.ca` hosts PyPI packages (`pypi-local`). Is banff there, and reachable from The Zone? Can R binary packages be published there too?
 5. **Compiler on The Zone RStudio image**: is gcc present? If not, Phase 2 binary packages become Phase 1.
 6. **gensol relationship**: give them a heads-up early? They may change the C ABI. Better they know an R binding exists.
 7. **3.2.1 internal**: is the ABI unchanged vs 3.1.3? Running `gen_procs.py` on 3.2.1 sources and diffing would tell us.

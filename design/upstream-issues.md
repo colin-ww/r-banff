@@ -1,64 +1,21 @@
-# Draft issues for StatCan/gensol-banff
+# Upstream issue drafts
 
-Found while building the R interface (Banff 3.1.3). These are drafts: review them, then file via fork--sc-banff.
+**Single source of truth:** GitHub issues in private repo
+[`colin-ww/sc-banff`](https://github.com/colin-ww/sc-banff/issues?q=label%3Aupstream-draft), label `upstream-draft`.
+That's the same convention earlier sessions used (conda-forge, docs audit). They stay private until reported to the Banff team.
 
-## 1. `import banff` crashes when the locale is C/POSIX
+The drafts below came from building this package. They're filed there and checked against 3.1.3 (PyPI) and 3.2.0 (Zone image wheel):
 
-**Repro** (any process where Python's `LC_CTYPE` is `C`, e.g. Python embedded in R via reticulate, or k8s/Docker with no `LANG`):
-```python
-import locale; locale.setlocale(locale.LC_CTYPE, "C")
-import banff
-# AttributeError: 'NoneType' object has no attribute 'lower'
-#   banff/_common/src/nls/nls.py:125  current_locale.lower()
-```
+| sc-banff | Draft | Status in 3.2.0 |
+|---|---|---|
+| [#17](https://github.com/colin-ww/sc-banff/issues/17) (existing) | `import banff` crashes under C/POSIX locale | **fixed** in 3.2.0; 3.1.3 only. Workaround in `R/backend-python.R` |
+| [#21](https://github.com/colin-ww/sc-banff/issues/21) | C silently ignores unknown parameter names | still present. R guards it (`check_unknown()`) |
+| [#22](https://github.com/colin-ww/sc-banff/issues/22) | `exclude_where_indata` silently overrides `data_excl_var` | still present (mirrored on purpose in R, D7) |
+| [#23](https://github.com/colin-ww/sc-banff/issues/23) | sample programs without `seed` aren't reproducible | still present on upstream `main` |
+| [#24](https://github.com/colin-ww/sc-banff/issues/24) | proposal: document the C ABI as a supported interface | n/a |
+| [#10](https://github.com/colin-ww/sc-banff/issues/10) (existing) | `ProcedureCError` hides the reason (only on stdout) | related: R captures the log into `$log` and the error |
 
-**Cause:** `locale.getlocale()` returns `(None, None)` for the C locale. `determine_language()` only catches `IndexError`.
-
-**Fix:** treat `None` as unknown, e.g. `current_locale = (locale.getlocale()[0] or "")`, or also catch `AttributeError`.
-
-**Workaround:** `locale.setlocale(locale.LC_CTYPE, "C.UTF-8")` before importing.
-
-**Note:** G-Confid's newer copy of the shared `_common` (`gconfid/_common/src/nls/nls.py`) already restructured
-`determine_language()`: it catches `ValueError` too and falls back to `$LANG`. Banff may only need a `_common` sync.
-Check whether internal 3.2.1 already has it before filing.
-
-## 2. Unknown parameters are silently ignored by the C procedures
-
-`verifyedits` (and the others) accept unknown JSON keys without a message. Python front-end users are
-protected by `_validate_keyword_args`. Any other caller of the C ABI (R, Banff Processor, future front-ends)
-isn't: a typo such as `acept_negative` runs and changes results.
-
-**Suggest:** C emits a `WARNING`/`ERROR` for unrecognised keys.
-
-## 3. `exclude_where_indata` silently overrides `data_excl_var` (donorimp, estimator)
-
-`_pp_exclude_where_indata()` sets `c_parms["data_excl_var"]` to the generated `_exclude` column. A
-user-given `data_excl_var` is discarded without notice. Same for `exclude_where_indata_hist` / `hist_excl_var`.
-
-**Suggest:** combine the two (exclude if either flag is set), or error when both are given.
-
-## 4. Sample programs without `seed` aren't reproducible
-
-`Estimator01.py`, `Estimator02.py` and `MassImp01.py` produce different output each run (`seed = … (value chosen
-by the system)`).
-
-**Suggest:** add `seed=` to the samples (they're used as documentation and as test references), and/or say in
-the user guide that omitting `seed` means a time-based seed.
-
-## 5. Request: document the C procedure ABI as a supported interface
-
-The C entry points (`int <proc>(char *json, ArrowArrayStream*…, ArrowSchema*/ArrowArray* …)`, plus
-`flush_std_buffers`, `get_rc_description`) are a clean, language-neutral interface. Documenting them would let other front-ends
-(R first) bind safely:
-- argument order per procedure
-- ownership rules
-- a version query function (e.g. `const char *banff_version(void)`)
-- a stability promise or changelog
-
-Today the only spec is `Python/src/banff/proc/proc_*.py::_call_c_code()`.
-
-## 6. (to verify) presort with pandas input may use an unstable sort
-
-`sort_dataset()` calls `DataFrame.sort_values(by=[...])` with the default `kind="quicksort"`, which isn't
-stable. Row order within BY groups could then depend on the input type (pandas vs pyarrow, whose sort *is* stable).
-I haven't checked whether C output depends on within-group order. Check before filing.
+Not filed:
+- **pandas presort may be unstable** (`sort_values` default quicksort). It isn't verified that C output depends on within-group order. Verify first.
+- **Integer `NA` becomes `-2147483648` via reticulate.** That's reticulate/numpy, not Banff. See feasibility.md and the earlier
+  [`sc-banff` reticulate notes](https://github.com/colin-ww/sc-banff/tree/ccr-aa7a8038-panyro/reticulate).

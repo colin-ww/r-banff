@@ -69,3 +69,11 @@ test_that("exclude_where_indata (SQL) == equivalent data_excl_var flag (DonorImp
   for (o in c("outdata", "outstatus", "outdonormap")) expect_identical(b[[o]], a[[o]], label = o)
   expect_match(b$log, "_exclude")
 })
+
+test_that("NA in integer columns reaches C as missing (reticulate turns it into -2147483648)", {
+  skip_if_no_binaries()
+  d <- data.frame(id = sprintf("r%d", 1:4), x = c(1L, NA, 3L, 4L))
+  r <- withr::with_options(list(banff.quiet = TRUE), editstats(d, edits = "x >= 0;"))
+  expect_identical(r$outedit_status$OBS_MISSED, 1)
+  expect_identical(r$outedit_status$OBS_FAILED, 0)
+})

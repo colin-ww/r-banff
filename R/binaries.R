@@ -9,15 +9,27 @@
 #' then `tools::R_user_dir("banff", "data")/<version>/<platform>`. To reuse a pip-installed banff,
 #' point `banff.lib_dir` at `<site-packages>/banff/proc/bin/<linux|windows>/x64`.
 #'
-#' @param version Banff version (PyPI version string).
+#' On The Zone the `mid` images already ship banff, so nothing needs downloading. Either point
+#' `options(banff.lib_dir = "/opt/conda/lib/python3.14/site-packages/banff/proc/bin/linux/x64")` at
+#' the pip install, or install from the vendored wheel:
+#' `banff_install_binaries(wheel = Sys.glob("/opt/vendor/banff-*.whl"))`.
+#'
+#' @param version Banff version (PyPI version string). Taken from the file name when `wheel` is given.
 #' @param index Simple-index base URL. For Artifactory use something like
 #'   `https://artifactory.example/artifactory/api/pypi/pypi-remote/simple`.
 #' @param dest Destination folder.
+#' @param wheel Optional path to a local banff `.whl` file. If given, no download happens.
 #' @return Path of the folder holding the libraries (invisibly).
 #' @export
 banff_install_binaries <- function(version = banff_default_version(),
                                    index = getOption("banff.pypi_index", "https://pypi.org/simple"),
-                                   dest = banff_lib_dir(version)) {
+                                   dest = banff_lib_dir(version),
+                                   wheel = NULL) {
+  if (!is.null(wheel)) {
+    stopifnot(length(wheel) == 1, file.exists(wheel))
+    version <- sub("^banff-([^-]+)-.*$", "\\1", basename(wheel))
+    return(extract_libs(wheel, version, dest))
+  }
   plat <- banff_platform()
   tag <- c(linux = "manylinux[^\"#]*x86_64", windows = "win_amd64")[[plat]]
   page <- paste(readLines(paste0(sub("/$", "", index), "/banff/"), warn = FALSE), collapse = "\n")
@@ -32,11 +44,20 @@ banff_install_binaries <- function(version = banff_default_version(),
   on.exit({ unlink(whl); options(old) })
   utils::download.file(sub("#.*$", "", url), whl, mode = "wb", quiet = TRUE)
   check_sha256(whl, sub("^.*#sha256=", "", url))
+  extract_libs(whl, version, dest)
+}
 
+extract_libs <- function(whl, version, dest) {
   libs <- grep("^banff/proc/bin/.*\\.(so|dll)$", utils::unzip(whl, list = TRUE)$Name, value = TRUE)
   dir.create(dest, recursive = TRUE, showWarnings = FALSE)
   utils::unzip(whl, files = libs, exdir = dest, junkpaths = TRUE)
   message("Installed ", length(libs), " Banff ", version, " libraries to ", dest)
+  if (version != banff_default_version()) {
+    warning("This package was generated for Banff ", banff_default_version(), ", not ", version, ". ",
+            "Use `options(banff.lib_dir = \"", dest, "\")` to select these libraries. Parameters added in ", version,
+            " need `options(banff.pass_unknown = TRUE)` until the package is regenerated; ",
+            "see design/feasibility.md (upstream stability).", call. = FALSE)
+  }
   invisible(dest)
 }
 

@@ -58,8 +58,16 @@ Facts that make an R binding easy:
 
 ### Why not just "reticulate yourself into Banff" (A)?
 
-Your experience matches what the spike hit:
+Your experience matches what the spike hit (and what an earlier session found in
+[`sc-banff` reticulate notes](https://github.com/colin-ww/sc-banff/tree/ccr-aa7a8038-panyro/reticulate)):
 
+- **Silent missing-value corruption (the worst one).** reticulate turns an R integer `NA` into numpy int32
+  **`-2147483648`**, because numpy ints have no NA. It also turns logical `NA` into `FALSE`. Banff then sees a real value.
+  Reproduced: `editstats` on `x = c(1L, NA, 3L, 4L)` reports `OBS_MISSED = 0, OBS_FAILED = 1` through reticulate,
+  but the correct `OBS_MISSED = 1, OBS_FAILED = 0` through r-banff, whose Arrow validity bitmap marks the value missing.
+  This is reticulate/numpy, not Banff. Guarded by a test (`test-c-backend.R`).
+- **Factors** become pandas `category` → Arrow dictionary. I didn't reproduce an error with `by = <factor>` in editstats.
+  r-banff converts factors to character anyway.
 - **Type conversion.** An R `data.frame` becomes pandas when it crosses over. An all-NA character column turns into
   object/None. pyarrow then infers type `null`, and the C code fails with
   `Variable 'AUXVARIABLES' … must be character, but it is unknown`. This was reproduced on the
@@ -68,8 +76,8 @@ Your experience matches what the spike hit:
   `set_default_output_spec("pandas")` or `$to_pandas()`, and then pandas' Arrow-backed string dtypes convert awkwardly.
   (You noted the same: "needed to use pandas not pyarrow".)
 - **Import crash.** Under a C/POSIX locale (an R process with no `LANG` set, bare k8s jobs, `Rscript` in Docker),
-  `import banff` dies with `AttributeError: 'NoneType' object has no attribute 'lower'`. See
-  [upstream-issues.md](upstream-issues.md#1).
+  `import banff` dies with `AttributeError: 'NoneType' object has no attribute 'lower'`. Fixed in 3.2.0, so
+  only 3.1.3 (PyPI) is affected. See [upstream-issues.md](upstream-issues.md) / sc-banff #17.
 - **Invisible log.** The C log is `printf` to process stdout, which RStudio Server doesn't show.
 - **Environment management.** Every user needs pip, a venv/conda and reticulate config. That's 340 MB per environment.
 
@@ -123,10 +131,11 @@ Yes, but less than it seems:
 
 | Layer | Stability | Impact on R | Mitigation |
 |---|---|---|---|
-| Parameter names (JSON keys) | additive so far. One rename since 3.0 (`match_field_stat` → `outmatching_fields`, 3.1.1b12) | new params need a regenerate. Until then they fail the unknown-name check (or use `banff.pass_unknown`) | `tools/gen_procs.py` per release |
-| Dataset argument order (C ABI) | internal, undocumented, no stability promise | a mismatch means wrong pointers, so **segfault** | generated from `_call_c_code()`; binaries pinned to the generated version (`banff_lib_dir(version)`); golden tests per release; ask upstream to document the ABI ([upstream-issues.md](upstream-issues.md#5)) |
+| Parameter names (JSON keys) | mostly additive. One rename since 3.0 (`match_field_stat` → `outmatching_fields`, 3.1.1b12). **3.2.0:** `outlier` gained `lower_p`/`upper_p` | new params need a regenerate. Until then they fail the unknown-name check (or use `banff.pass_unknown`) | `tools/gen_procs.py` per release |
+| Parameter **values** | **3.2.0 broke one:** outlier `method = "current"/"ratio"/"historic"` removed (merged into `"HB"`) | C rejects old values with a clear `ERROR`, so loud, not silent. 3 of 15 golden fixtures (3.1.3 samples) fail on 3.2.0 libs, as expected | re-record fixtures per version; read the release notes |
+| Dataset argument order (C ABI) | internal, undocumented, no stability promise. **Unchanged 3.1.3 → 3.2.0** (generator diff) | a mismatch means wrong pointers, so **segfault** | generated from `_call_c_code()`; binaries pinned to the generated version (`banff_lib_dir(version)`); golden tests per release; ask upstream to document the ABI (sc-banff #24) |
 | Python-only preprocessing semantics | could drift | R mirror could disagree | golden fixtures re-recorded from Python each release catch drift |
-| Release cadence | ~2/yr (3.1.1 Jan-2025, 3.1.2/3.1.3 Jun-2025, 3.2.1 internal Aug-2026) | small effort per release | scripted: regenerate → re-record fixtures → test |
+| Release cadence | ~2/yr (3.1.1 Jan-2025, 3.1.2/3.1.3 Jun-2025, 3.2.0 internal (in the Zone image), 3.2.1 internal Aug-2026?) | small effort per release | scripted: regenerate → re-record fixtures → test |
 
 ## G-Confid precedent (gconfid py → R, "SuppressR"/"yoho"?)
 
@@ -136,7 +145,7 @@ release 2026-04-30; on Artifactory `pypi-local`).
 - **No R code in that repo.** No `SuppressR` or `yoho` on GitHub, CRAN or PyPI either. If an R wrapper
   exists, it's internal (GitLab). → Open question: link?
 - **The same gensys framework as Banff.** `gconfid/_common` is a variant of `banff/_common`: the same
-  `GeneralizedProcedure`, loader, JSON + Arrow C ABI and nls code. So the same NoneType locale bug probably applies.
+  `GeneralizedProcedure`, loader, JSON + Arrow C ABI and nls code. Its newer `determine_language()` already has the locale fix that Banff got in 3.2.0.
 - **But only 1 of its 4 modules is C.**
 
   | Module | Implementation | R route |
@@ -163,3 +172,17 @@ release 2026-04-30; on Artifactory `pypi-local`).
 - The Python backend gives the same results as the C backend.
 - Error path: non-zero C return code → `banff_error` condition carrying `rc` and `log`.
 - Not yet tried: Windows (the shim has `#ifdef _WIN32` dup2 code, but it's untested), RStudio Server on The Zone, Artifactory PyPI mirror.
+
+## The Zone (from public `StatCan/zone-kubeflow-containers`, `images/mid`, 2026-11-06)
+
+- **R 4.6.1** (conda-forge) with **gcc / build-essential**, so `src/shim.c` compiles. Source installs are fine.
+- **banff 3.2.0 is pip-installed** in the image, plus banffprocessor 2.1.0. These are internal wheels from
+  `gitlab.k8s.cloud.statcan.ca/gensys/banff` via Artifactory, vendored at `/opt/vendor/`.
+  So **no download is needed on The Zone**:
+  - `options(banff.lib_dir = "/opt/conda/lib/python3.14/site-packages/banff/proc/bin/linux/x64")`, or
+  - `banff_install_binaries(wheel = Sys.glob("/opt/vendor/banff-*.whl"))`. Tested here with the vendored 3.2.0 wheel.
+- Caveat: this package is generated for 3.1.3 (latest on PyPI). 3.2.0 libs work. Its new params need
+  `banff.pass_unknown` or a regenerate. Its removed outlier methods error (see stability table).
+- The internal GitLab group **`gensys`** is probably where the shared `_common` / `STC_C_Libraries` code and
+  newer systems (YOHO? Jasper?) live. Nothing on public GitHub: StatCan's public gensol repos are only
+  `gensol-banff`, `gensol-banff-processor`, `gensol-gconfid`, `gensol-gseries`.
